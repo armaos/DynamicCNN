@@ -1,4 +1,4 @@
-__author__ = 'Alexandros Armaos  (alexandros@tartaglialab.com )'
+__author__ = 'Frederic Godin  (frederic.godin@ugent.be / www.fredericgodin.com)'
 import lasagne
 import DCNN
 import theano.tensor as T
@@ -15,6 +15,7 @@ def parseActivation(str_a):
         return lasagne.nonlinearities.sigmoid
     else:
         raise Exception("Activation function \'"+str_a+"\' is not recognized")
+
 
 def buildDCNNPaper(batch_size,vocab_size,embeddings_size=48,filter_sizes=[10,7],nr_of_filters=[6,12],activations=["tanh","tanh"],ktop=5,dropout=0.5,output_classes=2,padding='last'):
 
@@ -69,93 +70,6 @@ def buildDCNNPaper(batch_size,vocab_size,embeddings_size=48,filter_sizes=[10,7],
 
     return l_out
 
-def build1DDCNN(batch_size,vocab_size,filter_sizes=[10,7],nr_of_filters=[6,12],activations=["tanh","tanh"],ktop=5,dropout=0.5,output_classes=2,padding='last'):
-
-    l_in = lasagne.layers.InputLayer(
-        shape=(batch_size, None),
-    )
-
-
-    l_conv1 = DCNN.convolutions.Conv1DLayer(
-        l_in,
-        nr_of_filters[0],
-        filter_sizes[0],
-        nonlinearity=lasagne.nonlinearities.linear,
-        border_mode="full"
-    )
-
-    l_pool1 = DCNN.pooling.DynamicKMaxPoolLayer(l_conv1,ktop,nroflayers=2,layernr=1)
-
-
-    l_nonlinear1 = lasagne.layers.NonlinearityLayer(l_pool1,nonlinearity=parseActivation(activations[0]))
-
-    l_conv2 = DCNN.convolutions.Conv1DLayer(
-        l_nonlinear1,
-        nr_of_filters[1],
-        filter_sizes[1],
-        nonlinearity=lasagne.nonlinearities.linear,
-        border_mode="full"
-    )
-
-
-    l_pool2 = DCNN.pooling.KMaxPoolLayer(l_conv2,ktop)
-
-    l_nonlinear2 = lasagne.layers.NonlinearityLayer(l_pool2,nonlinearity=parseActivation(activations[1]))
-
-    l_dropout2=lasagne.layers.DropoutLayer(l_nonlinear2,p=dropout)
-
-    l_out = lasagne.layers.DenseLayer(
-        l_dropout2,
-        num_units=output_classes,
-        nonlinearity=lasagne.nonlinearities.softmax
-        )
-
-    return l_out
-
-def build2DDCNN(batch_size,vocab_size,embeddings_size=48,filter_sizes=[10,7],nr_of_filters=[24,12],activations=["tanh","tanh"],ktop=5,dropout=0.5,output_classes=2,padding='last'):
-
-    l_in = lasagne.layers.InputLayer(
-        shape=(batch_size, None),
-    )
-
-
-    l_conv1 = DCNN.convolutions.Conv2DLayer(
-        l_in,
-        nr_of_filters[0],
-        filter_sizes[0],
-        nonlinearity=lasagne.nonlinearities.linear,
-        border_mode="full"
-    )
-
-    l_pool1 = DCNN.pooling.DynamicKAreasMaxPoolLayer(l_conv1,ktop,nroflayers=2,layernr=1)
-
-
-    l_nonlinear1 = lasagne.layers.NonlinearityLayer(l_pool1,nonlinearity=parseActivation(activations[0]))
-
-    l_conv2 = DCNN.convolutions.Conv2DLayer(
-        l_nonlinear1,
-        nr_of_filters[1],
-        filter_sizes[1],
-        nonlinearity=lasagne.nonlinearities.linear,
-        border_mode="full"
-    )
-
-    l_fold2 = DCNN.folding.FoldingLayer(l_conv2)
-
-    l_pool2 = DCNN.pooling.KMaxPoolLayer(l_fold2,ktop)
-
-    l_nonlinear2 = lasagne.layers.NonlinearityLayer(l_pool2,nonlinearity=parseActivation(activations[1]))
-
-    l_dropout2=lasagne.layers.DropoutLayer(l_nonlinear2,p=dropout)
-
-    l_out = lasagne.layers.DenseLayer(
-        l_dropout2,
-        num_units=output_classes,
-        nonlinearity=lasagne.nonlinearities.softmax
-        )
-
-    return l_out
-
 
 
 
@@ -187,3 +101,5 @@ def buildMaxTDNN(batch_size,vocab_size,embeddings_size,filter_size,output_classe
         )
 
     return l_out
+
+

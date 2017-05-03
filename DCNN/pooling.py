@@ -106,8 +106,8 @@ class DynamicKMaxPoolLayer(KMaxPoolLayer):
     def get_output_for(self, input, **kwargs):
 
         k = self.get_k_matrix(input.shape)
+        return self.kmaxpooling(input,k)
 
-        return self.kmaxpooling_matrix(input,k)
 
 class DynamicKAreasMaxPoolLayer(Layer):
 

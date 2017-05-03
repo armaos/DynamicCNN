@@ -1,5 +1,3 @@
-__author__ = 'Frederic Godin  (frederic.godin@ugent.be / www.fredericgodin.com)'
-
 from collections import OrderedDict
 
 import numpy as np
