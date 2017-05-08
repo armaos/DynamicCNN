@@ -10,6 +10,8 @@ from theano.tensor.nnet import conv2d
 
 # Adapted from Lasagne
 class Conv1DLayer(Layer):
+
+#Glorot: This is also known as Xavier initialization
 #GlorotUniform: This is also known as Xavier initialization picking from Unifrom distribution
 #GlorotNormal: This is also known as Xavier initialization picking from Unifrom distribution
     def __init__(self, incoming, num_filters, filter_size,

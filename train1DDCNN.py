@@ -37,7 +37,6 @@ parser.add_argument("--vocab_size",type=int, default=100, help='Vocabulary size'
 parser.add_argument("--output_classes",type=int, default=2, help='Number of output classes')
 parser.add_argument("--batch_size",type=int, default=4, help='Batch size')
 # network paras
-parser.add_argument("--word_vector_size",type=int, default=48, help='Word vector size')
 parser.add_argument("--filter_size_conv_layers", nargs="+", type=int, default=[7,5],help="List of sizes of filters at layer 1 and 2, default=[8,5]")
 parser.add_argument("--nr_of_filters_conv_layers", nargs="+", type=int, default=[7,15],help="List of number of filters at layer 1 and 2, default=[20,14]")
 parser.add_argument("--activations",nargs='+', type=str,default=["tanh","tanh"],help="List of activation functions behind first and second conv layers, default [tanh, tanh]. Possible values are \"linear\", \"tanh\", \"rectify\" and \"sigmoid\". ")
@@ -45,6 +44,8 @@ parser.add_argument("--L2",nargs='+',type=float,default=[0.00003/2,0.000003/2,0.
 parser.add_argument("--ktop",type=int,default=4,help="K value of top pooling layer DCNN")
 parser.add_argument("--dropout_value", type=float,default=0.5,help="Dropout value after penultimate layer")
 parser.add_argument("--channels_size", type=int,default=20,help="Number of input channels")
+# cost functions
+parser.add_argument("--objective", type=str,default='binary',help="Objective binary/categorical crossentropy")
 
 
 args = parser.parse_args()
@@ -113,7 +114,10 @@ for layer in lasagne.layers.get_all_layers(output_layer):
     if isinstance(layer,(DCNN.convolutions.Conv1DLayer,lasagne.layers.DenseLayer)):
         l2_layers.append(layer)
 
-s1=lasagne.objectives.aggregate(lasagne.objectives.categorical_crossentropy(lasagne.layers.get_output(output_layer,X_batch),y_batch),mode='mean')
+if objective=="categorical":
+    s1=lasagne.objectives.aggregate(lasagne.objectives.categorical_crossentropy(lasagne.layers.get_output(output_layer,X_batch),y_batch),mode='mean')
+if objective=="binary":
+    s1=lasagne.objectives.aggregate(lasagne.objectives.binary_crossentropy(lasagne.layers.get_output(output_layer,X_batch),y_batch),mode='mean')
 s2=lasagne.regularization.regularize_layer_params_weighted(dict(zip(l2_layers,hyperparas["L2"])),lasagne.regularization.l2)
 loss_train=s1+s2
 #loss_train = lasagne.objectives.aggregate(lasagne.objectives.categorical_crossentropy(lasagne.layers.get_output(output_layer,X_batch),y_batch),mode='mean')+lasagne.regularization.regularize_layer_params_weighted(dict(zip(l2_layers,hyperparas["L2"])),lasagne.regularization.l2)
