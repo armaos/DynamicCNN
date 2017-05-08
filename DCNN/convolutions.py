@@ -10,10 +10,11 @@ from theano.tensor.nnet import conv2d
 
 # Adapted from Lasagne
 class Conv1DLayer(Layer):
-
+#GlorotUniform: This is also known as Xavier initialization picking from Unifrom distribution
+#GlorotNormal: This is also known as Xavier initialization picking from Unifrom distribution
     def __init__(self, incoming, num_filters, filter_size,
                  border_mode="valid",
-                 W=lasagne.init.GlorotUniform(), b=lasagne.init.Constant(0.),
+                 W=lasagne.init.GlorotNormal(), b=lasagne.init.Constant(0.),
                  nonlinearity=nonlinearities.rectify,
                  **kwargs):
         super(Conv1DLayer, self).__init__(incoming, **kwargs)
@@ -27,15 +28,10 @@ class Conv1DLayer(Layer):
         self.stride = lasagne.utils.as_tuple(1, 1)
         self.border_mode = border_mode
 
+        print self.input_shape
 
-        # If it is an image the input shape will be 3
-        # If it is a stack of filter ouputs after a previous convolution, the input shape will be 4
-        if len(self.input_shape)==3:
-            self.num_input_channels = self.input_shape[0]
-            self.num_of_rows = self.input_shape[1]
-        elif len(self.input_shape)==4:
-            self.num_input_channels = self.input_shape[1]
-            self.num_of_rows = self.input_shape[2]
+        self.num_input_channels = self.input_shape[1]
+        self.num_of_rows = self.input_shape[2]
 
         self.W = self.add_param(W, self.get_W_shape(), name="W")
         if b is None:
@@ -46,7 +42,7 @@ class Conv1DLayer(Layer):
             self.b = self.add_param(b, biases_shape, name="b", regularizable=False)
 
     def get_W_shape(self):
-        return (self.num_filters,self.num_input_channels, 1, self.filter_size)
+        return (self.num_filters,self.num_input_channels, self.num_of_rows, self.filter_size)
 
     def get_output_shape_for(self, input_shape):
 
@@ -66,13 +62,6 @@ class Conv1DLayer(Layer):
 
         filter_shape = self.get_W_shape()
 
-
-
-        ###
-        # We split the input shape and the filters into seperate rows to be able to execute a row wise 1D convolutions
-        # We cannot convolve over the columns
-        # However, we do need to convolve over multiple channels=output filters previous layer
-        # See paper of Kalchbrenner for more details
         if self.border_mode in ['valid', 'full']:
             conved = T.nnet.conv.conv2d(
                            input=input,
@@ -206,6 +195,7 @@ class Conv1DLayerSplitted(Layer):
 
         # If it is an image the input shape will be 3
         # If it is a stack of filter ouputs after a previous convolution, the input shape will be 4
+        print len(self.input_shape)
         if len(self.input_shape)==3:
             self.num_input_channels = 1
             self.num_of_rows = self.input_shape[1]
@@ -239,6 +229,10 @@ class Conv1DLayerSplitted(Layer):
             input_shape = self.input_shape
 
         filter_shape = self.get_W_shape()
+        '''print input_shape
+        print filter_shape
+        print input.dtype
+        print "\n"'''
 
         # We split the input shape and the filters into seperate rows to be able to execute a row wise 1D convolutions
         # We cannot convolve over the columns

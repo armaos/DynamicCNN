@@ -27,4 +27,3 @@ class SentenceEmbeddingLayer(EmbeddingLayer):
         t_size = len(self.input_shape)+1
         t_shape = tuple(range(0,t_size-2))+(t_size-1,t_size-2)
         return T.transpose(self.sentence_W[input],t_shape)
-

@@ -79,10 +79,11 @@ X_batch = T.imatrix('x')
 y_batch = T.ivector('y')
 #IPython.embed()
 # define/load the network
-output_layer = networks.buildDCNNPaper(batch_size=hyperparas['batch_size'],vocab_size=hyperparas['vocab_size'],embeddings_size=hyperparas['word_vector_size'],filter_sizes=hyperparas['filter_size_conv_layers'],nr_of_filters=hyperparas['nr_of_filters_conv_layers'],activations=hyperparas['activations'],ktop=hyperparas['ktop'],dropout=hyperparas["dropout_value"],output_classes=hyperparas['output_classes'],padding='last')
 
+output_layer = networks.buildDCNNPaper(batch_size=hyperparas['batch_size'],vocab_size=hyperparas['vocab_size'],embeddings_size=hyperparas['word_vector_size'],filter_sizes=hyperparas['filter_size_conv_layers'],nr_of_filters=hyperparas['nr_of_filters_conv_layers'],activations=hyperparas['activations'],ktop=hyperparas['ktop'],dropout=hyperparas["dropout_value"],output_classes=hyperparas['output_classes'],padding='last')
 # Kalchbrenner uses a fine-grained L2 regularization in the Matlab code, default values taken from Matlab code
 # Training objective
+
 l2_layers = []
 for layer in lasagne.layers.get_all_layers(output_layer):
     if isinstance(layer,(DCNN.embeddings.SentenceEmbeddingLayer,DCNN.convolutions.Conv1DLayerSplitted,lasagne.layers.DenseLayer)):

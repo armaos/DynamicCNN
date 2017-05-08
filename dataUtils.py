@@ -96,9 +96,12 @@ def read_data_1d(x_file,y_file,padding_value=100):
     i=0
     file=open(x_file,"r")
 
+    N=50000
+    #for line in file:
 
-    for line in file:
-        line=line.strip()
+    for k in range(N):
+        line=file.next().strip()
+        #line=line.strip()
         seq=line+''.join(['X' for j in range(len(line),100)])
         x_data.append(one_hot(seq))
         length=len(line)
@@ -112,16 +115,20 @@ def read_data_1d(x_file,y_file,padding_value=100):
     file = open(y_file,"r")
 
 
+
     y_data = []
     print "loading labels"
-    for line in file:
-        line=line.strip()
-        if line=='0':
+    for k in range(N):
+        line=file.next().strip()
+    #for line in file:
+        #line=line.strip()
+        y_data.append(int(line.strip()))
+        """if line=='0':
             y_data.append(np.array([0,1], dtype=np.int8))
         elif line=='1':
-            y_data.append(np.array([1,0], dtype=np.int8))
+            y_data.append(np.array([1,0], dtype=np.int8))"""
 
-        y_data.append(int(words[0])-1)
+
     file.close()
 
 
@@ -134,17 +141,28 @@ def read_data_1d(x_file,y_file,padding_value=100):
             new_train_list.append(x_data[index])
             new_label_list.append(y_data[index])
             lengths.append(length)
-    IPython.embed()
-    return np.asarray(new_train_list,dtype=np.int8),np.asarray(new_label_list,dtype=np.int8),lengths
+
+
+    return np.asarray(new_train_list,dtype=np.int32),np.asarray(new_label_list,dtype=np.int32),lengths
 
 
 def pad_to_batch_size(array,batch_size):
+
     rows_extra = batch_size - (array.shape[0] % batch_size)
     if len(array.shape)==1:
         padding = np.zeros((rows_extra,),dtype=np.int32)
         return np.concatenate((array,padding))
-    else:
+
+    elif len(array.shape)==2:
         padding = np.zeros((rows_extra,array.shape[1]),dtype=np.int32)
+        return np.vstack((array,padding))
+
+    elif len(array.shape)==3:
+        padding = np.zeros((rows_extra,array.shape[1],array.shape[2]),dtype=np.int32)
+
+    elif len(array.shape)==4:
+        padding = np.zeros((rows_extra,array.shape[1],array.shape[2],array.shape[3]),dtype=np.int32)
+
         return np.vstack((array,padding))
 
 def extend_lenghts(length_list,batch_size):
