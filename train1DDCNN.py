@@ -56,7 +56,7 @@ if len(hyperparas['filter_size_conv_layers'])!= hyperparas['nlayers'] or len(hyp
     raise Exception('Check if the input --filter_size_conv_layers, --nr_of_filters_conv_layers and --activations are lists of size 2, and the --L2 field needs a value list of 4 values.')
 if hyperparas['nlayers']<=0:
     raise Exception('Check number of convolution layers!')
-
+title="LR"+str(hyperparas["learning_rate"])+"_NL"+str(hyperparas["nlayers"])+"_L2"+str(hyperparas["L2"])+"_k_"+str(hyperparas["ktop"])+str(hyperparas["objective"])
 
 
 #######################
@@ -150,6 +150,9 @@ print('Because of the default high validation frequency, only improvements are p
 best_validation_accuracy = 0
 epoch = 0
 batch_size = hyperparas["batch_size"]
+train_costs=[]
+validation_accuraces=[]
+testing_accuracies=[]
 while (epoch < hyperparas['n_epochs']):
     epoch = epoch + 1
     permutation = numpy.random.permutation(n_train_batches)
@@ -160,6 +163,7 @@ while (epoch < hyperparas['n_epochs']):
         y_input = train_y[minibatch_index*batch_size:(minibatch_index+1)*batch_size]
         #print "train", x_input.shape , y_input.shape
         train_loss+=train_model(x_input,y_input)
+        train_costs.append(train_loss)
 
         if batch_counter>0 and batch_counter % hyperparas["valid_freq"] == 0:
             accuracy_valid=[]
@@ -171,7 +175,7 @@ while (epoch < hyperparas['n_epochs']):
 
             #dirty code to correctly asses validation accuracy, last results in the array are predictions for the padding rows and can be dumped afterwards
             this_validation_accuracy = numpy.concatenate(accuracy_valid)[0:n_dev_samples].sum()/float(n_dev_samples)
-
+            validation_accuraces.append(this_validation_accuracy)
             if this_validation_accuracy > best_validation_accuracy:
                 print("Train loss, "+str( (train_loss/hyperparas["valid_freq"]))+", validation accuracy: "+str(this_validation_accuracy*100)+"%")
                 best_validation_accuracy = this_validation_accuracy
@@ -184,11 +188,14 @@ while (epoch < hyperparas['n_epochs']):
                     #print "test", x_input.shape , y_input.shape
                     accuracy_test.append(test_model(x_input,y_input))
                 this_test_accuracy = numpy.concatenate(accuracy_test)[0:n_test_samples].sum()/float(n_test_samples)
+                testing_accuraces_accuraces.append(this_test_accuracy)
+
                 print("Test accuracy: "+str(this_test_accuracy*100)+"%")
 
             train_loss=0
         batch_counter+=1
 
+        dataUtils.check_plots(title,train_costs,validation_accuraces, testing_accuraces_accuraces)
     if hyperparas["adagrad_reset"] > 0:
         if epoch % hyperparas["adagrad_reset"] == 0:
             utils.reset_grads(accumulated_grads)

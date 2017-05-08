@@ -3,6 +3,7 @@ __author__ = 'Alexandros Armaos  (alexandros@tartaglialab.com )'
 import numpy as np
 import IPython
 import collections
+import matplotlib.pyplot as plt
 aa='ARNDCQEGHIKLMFPSTWYV'
 
 nt="ACGT"
@@ -168,3 +169,16 @@ def pad_to_batch_size(array,batch_size):
 def extend_lenghts(length_list,batch_size):
     elements_extra = batch_size - (len(length_list) % batch_size)
     length_list.extend([length_list[-1]]*elements_extra)
+
+def check_plots(title,train_costs,validation_accuraces, testing_accuraces_accuraces):
+    folder="data/figures/"+title
+    fig = plt.figure()
+    plt.plot(range(len(train_costs)),train_costs)
+    plt.legend("training cost", loc='upper left')
+    fig.savefig(folder+'-train_costs.png', dpi=fig.dpi)
+
+    fig = plt.figure()
+    plt.plot(range(len(validation_accuraces)),validation_accuraces)
+    plt.plot(range(len(testing_accuraces_accuraces)),testing_accuraces_accuraces)
+    plt.legend(['Validation acc', 'Test acc'], loc='upper left')
+    fig.savefig(folder+'-Accuracies.png', dpi=fig.dpi)
