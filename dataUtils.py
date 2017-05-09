@@ -3,6 +3,8 @@ __author__ = 'Alexandros Armaos  (alexandros@tartaglialab.com )'
 import numpy as np
 import IPython
 import collections
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 aa='ARNDCQEGHIKLMFPSTWYV'
 

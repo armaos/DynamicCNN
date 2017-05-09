@@ -45,13 +45,12 @@ parser.add_argument("--ktop",type=int,default=4,help="K value of top pooling lay
 parser.add_argument("--dropout_value", type=float,default=0.5,help="Dropout value after penultimate layer")
 parser.add_argument("--channels_size", type=int,default=20,help="Number of input channels")
 # cost functions
-parser.add_argument("--objective", type=str,default='binary',help="Objective binary/categorical crossentropy")
+parser.add_argument("--objective", type=str,default='categorical',help="Objective binary/categorical crossentropy")
 
 
 args = parser.parse_args()
 hyperparas = vars(args)
 print("Hyperparameters: "+str(hyperparas))
-
 if len(hyperparas['filter_size_conv_layers'])!= hyperparas['nlayers'] or len(hyperparas['nr_of_filters_conv_layers'])!=hyperparas['nlayers'] or len(hyperparas['activations'])!=hyperparas['nlayers'] or len(hyperparas["L2"])!=hyperparas['nlayers']+1 :
     raise Exception('Check if the input --filter_size_conv_layers, --nr_of_filters_conv_layers and --activations are lists of size 2, and the --L2 field needs a value list of 4 values.')
 if hyperparas['nlayers']<=0:
@@ -114,9 +113,9 @@ for layer in lasagne.layers.get_all_layers(output_layer):
     if isinstance(layer,(DCNN.convolutions.Conv1DLayer,lasagne.layers.DenseLayer)):
         l2_layers.append(layer)
 
-if objective=="categorical":
+if hyperparas['objective']=="categorical":
     s1=lasagne.objectives.aggregate(lasagne.objectives.categorical_crossentropy(lasagne.layers.get_output(output_layer,X_batch),y_batch),mode='mean')
-if objective=="binary":
+if hyperparas['objective']=="binary":
     s1=lasagne.objectives.aggregate(lasagne.objectives.binary_crossentropy(lasagne.layers.get_output(output_layer,X_batch),y_batch),mode='mean')
 s2=lasagne.regularization.regularize_layer_params_weighted(dict(zip(l2_layers,hyperparas["L2"])),lasagne.regularization.l2)
 loss_train=s1+s2
@@ -151,7 +150,7 @@ best_validation_accuracy = 0
 epoch = 0
 batch_size = hyperparas["batch_size"]
 train_costs=[]
-validation_accuraces=[]
+validation_accuracies=[]
 testing_accuracies=[]
 while (epoch < hyperparas['n_epochs']):
     epoch = epoch + 1
@@ -162,6 +161,7 @@ while (epoch < hyperparas['n_epochs']):
         x_input = train_x_indexes[minibatch_index*batch_size:(minibatch_index+1)*batch_size,:,:,0:train_lengths[(minibatch_index+1)*batch_size-1]]
         y_input = train_y[minibatch_index*batch_size:(minibatch_index+1)*batch_size]
         #print "train", x_input.shape , y_input.shape
+
         train_loss+=train_model(x_input,y_input)
         train_costs.append(train_loss)
 
@@ -175,7 +175,7 @@ while (epoch < hyperparas['n_epochs']):
 
             #dirty code to correctly asses validation accuracy, last results in the array are predictions for the padding rows and can be dumped afterwards
             this_validation_accuracy = numpy.concatenate(accuracy_valid)[0:n_dev_samples].sum()/float(n_dev_samples)
-            validation_accuraces.append(this_validation_accuracy)
+            validation_accuracies.append(this_validation_accuracy)
             if this_validation_accuracy > best_validation_accuracy:
                 print("Train loss, "+str( (train_loss/hyperparas["valid_freq"]))+", validation accuracy: "+str(this_validation_accuracy*100)+"%")
                 best_validation_accuracy = this_validation_accuracy
@@ -188,14 +188,14 @@ while (epoch < hyperparas['n_epochs']):
                     #print "test", x_input.shape , y_input.shape
                     accuracy_test.append(test_model(x_input,y_input))
                 this_test_accuracy = numpy.concatenate(accuracy_test)[0:n_test_samples].sum()/float(n_test_samples)
-                testing_accuraces_accuraces.append(this_test_accuracy)
+                testing_accuracies.append(this_test_accuracy)
 
                 print("Test accuracy: "+str(this_test_accuracy*100)+"%")
 
             train_loss=0
         batch_counter+=1
 
-        dataUtils.check_plots(title,train_costs,validation_accuraces, testing_accuraces_accuraces)
+        dataUtils.check_plots(title,train_costs,validation_accuracies, testing_accuracies)
     if hyperparas["adagrad_reset"] > 0:
         if epoch % hyperparas["adagrad_reset"] == 0:
             utils.reset_grads(accumulated_grads)

@@ -1,5 +1,5 @@
 --learning_rate 0.1
---n_epochs 50
+--n_epochs 51
 --valid_freq 10
 --adagrad_reset 5
 --nlayers 2
@@ -10,7 +10,7 @@
 --nr_of_filters_conv_layers 5 10
 --activations 'tanh' 'tanh'
 --L2 1.5e-05 1.5e-06 5e-05
---ktop 10
+--ktop 6
 --dropout_value 0.5
 --channels_size 20
---objective 'binary'
+--objective 'categorical'
