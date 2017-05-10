@@ -78,7 +78,6 @@ test_x_indexes=test_x_indexes.reshape(shape_[0],1,shape_[1],shape_[2])
 
 shape_=dev_x_indexes.shape
 dev_x_indexes=dev_x_indexes.reshape(shape_[0],1,shape_[1],shape_[2])
-#channels_size=train_x_indexes.shape[1]
 n_train_batches = len(train_x_indexes) / hyperparas['batch_size']
 
 IPython.embed()
@@ -95,6 +94,8 @@ test_y_extended = dataUtils.pad_to_batch_size(test_y,hyperparas['batch_size'])
 n_test_batches = test_x_indexes_extended.shape[0] / hyperparas['batch_size']
 n_test_samples = len(test_y)
 
+IPython.embed()
+
 ######################
 # BUILD ACTUAL MODEL #
 ######################
@@ -107,7 +108,7 @@ y_batch = T.lvector('y')
 
 rng = numpy.random.RandomState(23455)
 # define/load the network
-output_layer = networks.build1DDCNN_dynamic(nlayers=hyperparas['nlayers'],batch_size=hyperparas['batch_size'],channels_size=hyperparas['channels_size'],vocab_size=hyperparas['vocab_size'],filter_sizes=hyperparas['filter_size_conv_layers'],nr_of_filters=hyperparas['nr_of_filters_conv_layers'],activations=hyperparas['activations'],ktop=hyperparas['ktop'],dropout=hyperparas["dropout_value"],output_classes=hyperparas['output_classes'],padding='last')
+output_layer = networks.build1DCNN_dynamic(nlayers=hyperparas['nlayers'],batch_size=hyperparas['batch_size'],filter_sizes=hyperparas['filter_size_conv_layers'],nr_of_filters=hyperparas['nr_of_filters_conv_layers'],activations=hyperparas['activations'],dropout=hyperparas["dropout_value"],output_classes=hyperparas['output_classes'],padding='last')
 
 l2_layers = []
 for layer in lasagne.layers.get_all_layers(output_layer):

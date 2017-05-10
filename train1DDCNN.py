@@ -96,6 +96,7 @@ test_y_extended = dataUtils.pad_to_batch_size(test_y,hyperparas['batch_size'])
 n_test_batches = test_x_indexes_extended.shape[0] / hyperparas['batch_size']
 n_test_samples = len(test_y)
 dataUtils.extend_lenghts(test_lengths,hyperparas['batch_size'])
+IPython.embed()
 
 ######################
 # BUILD ACTUAL MODEL #
