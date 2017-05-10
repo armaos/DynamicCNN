@@ -108,25 +108,16 @@ def read_data_1d(x_file,y_file,padding_value=100):
 def read_biovec_data(x_file,y_file):
 
     print "loading features"
-    sorted_dict = {}
     x_data = []
-    i=0
     file=open(x_file,"r")
 
-    N=50000
+    N=5
     #for line in file:
 
     for k in range(N):
         line=file.next().strip()
+        seq=line
         x_data.append(pv.to_vecs(seq))
-        x_data.append(one_hot(seq))
-        IPython.embed()
-        length=len(line)
-        if length in sorted_dict:
-            sorted_dict[length].append(i)
-        else:
-            sorted_dict[length]=[i]
-        i+=1
 
     file.close()
     file = open(y_file,"r")
@@ -137,30 +128,10 @@ def read_biovec_data(x_file,y_file):
     print "loading labels"
     for k in range(N):
         line=file.next().strip()
-    #for line in file:
-        #line=line.strip()
         y_data.append(int(line.strip()))
-        """if line=='0':
-            y_data.append(np.array([0,1], dtype=np.int8))
-        elif line=='1':
-            y_data.append(np.array([1,0], dtype=np.int8))"""
-
 
     file.close()
-
-
-    new_train_list = []
-    new_label_list = []
-    lengths = []
-    print "building new lists"
-    for length, indexes in sorted_dict.items():
-        for index in indexes:
-            new_train_list.append(x_data[index])
-            new_label_list.append(y_data[index])
-            lengths.append(length)
-
-
-    return np.asarray(new_train_list,dtype=np.int32),np.asarray(new_label_list,dtype=np.int32),lengths
+    return np.asarray(x_data,dtype=np.float64),np.asarray(y_data,dtype=np.float64)
 
 def pad_to_batch_size(array,batch_size):
 

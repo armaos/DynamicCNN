@@ -66,36 +66,34 @@ title="LR"+str(hyperparas["learning_rate"])+"_NL"+str(hyperparas["nlayers"])+"_k
 #######################
 print('Loading the training data')
 training_data_path="data/protein_fragments/"
-train_x_indexes, train_y, train_lengths = dataUtils.read_biovec_data(training_data_path+"train_x.txt",training_data_path+"train_y.txt")
-test_x_indexes, test_y, test_lengths = dataUtils.read_biovec_data(training_data_path+"test_x.txt",training_data_path+"test_y.txt")
-dev_x_indexes, dev_y, dev_lengths = dataUtils.read_biovec_data(training_data_path+"valid_x.txt",training_data_path+"valid_y.txt")
+train_x_indexes, train_y = dataUtils.read_biovec_data(training_data_path+"train_x.txt",training_data_path+"train_y.txt")
+test_x_indexes, test_y = dataUtils.read_biovec_data(training_data_path+"test_x.txt",training_data_path+"test_y.txt")
+dev_x_indexes, dev_y = dataUtils.read_biovec_data(training_data_path+"valid_x.txt",training_data_path+"valid_y.txt")
 
 shape_=train_x_indexes.shape
-train_x_indexes=train_x_indexes.reshape(shape_[0],shape_[1],1,shape_[2])
+train_x_indexes=train_x_indexes.reshape(shape_[0],1,shape_[1],shape_[2])
 
 shape_=test_x_indexes.shape
-test_x_indexes=test_x_indexes.reshape(shape_[0],shape_[1],1,shape_[2])
+test_x_indexes=test_x_indexes.reshape(shape_[0],1,shape_[1],shape_[2])
 
 shape_=dev_x_indexes.shape
-dev_x_indexes=dev_x_indexes.reshape(shape_[0],shape_[1],1,shape_[2])
+dev_x_indexes=dev_x_indexes.reshape(shape_[0],1,shape_[1],shape_[2])
 #channels_size=train_x_indexes.shape[1]
-n_train_batches = len(train_lengths) / hyperparas['batch_size']
+n_train_batches = len(train_x_indexes) / hyperparas['batch_size']
 
-
+IPython.embed()
 #dev data
 # to be able to do a correct evaluation, we pad a number of rows to get a multiple of the batch size
 dev_x_indexes_extended = dataUtils.pad_to_batch_size(dev_x_indexes,hyperparas['batch_size'])
 dev_y_extended = dataUtils.pad_to_batch_size(dev_y,hyperparas['batch_size'])
 n_dev_batches = dev_x_indexes_extended.shape[0] / hyperparas['batch_size']
 n_dev_samples = len(dev_y)
-dataUtils.extend_lenghts(dev_lengths,hyperparas['batch_size'])
 
 # test data
 test_x_indexes_extended = dataUtils.pad_to_batch_size(test_x_indexes,hyperparas['batch_size'])
 test_y_extended = dataUtils.pad_to_batch_size(test_y,hyperparas['batch_size'])
 n_test_batches = test_x_indexes_extended.shape[0] / hyperparas['batch_size']
 n_test_samples = len(test_y)
-dataUtils.extend_lenghts(test_lengths,hyperparas['batch_size'])
 
 ######################
 # BUILD ACTUAL MODEL #
