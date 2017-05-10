@@ -1,7 +1,7 @@
---learning_rate 0.1
---n_epochs 51
+--learning_rate 1
+--n_epochs 20
 --valid_freq 10
---adagrad_reset 5
+--adagrad_reset 0
 --nlayers 2
 --vocab_size 100
 --output_classes 2
@@ -14,3 +14,4 @@
 --dropout_value 0.5
 --channels_size 20
 --objective 'categorical'
+--updates 'adadelta'

@@ -174,13 +174,15 @@ def extend_lenghts(length_list,batch_size):
 
 def check_plots(title,train_costs,validation_accuraces, testing_accuraces_accuraces):
     folder="data/figures/"+title
-    fig = plt.figure()
-    plt.plot(range(len(train_costs)),train_costs)
-    plt.legend("training cost", loc='upper left')
-    fig.savefig(folder+'-train_costs.png', dpi=fig.dpi)
 
-    fig = plt.figure()
+    plt.plot(range(len(train_costs)),train_costs)
+    plt.legend(["training cost"], loc='best')
+    plt.savefig(folder+'-train_costs.png')
+    plt.close()
+
+
     plt.plot(range(len(validation_accuraces)),validation_accuraces)
     plt.plot(range(len(testing_accuraces_accuraces)),testing_accuraces_accuraces)
-    plt.legend(['Validation acc', 'Test acc'], loc='upper left')
-    fig.savefig(folder+'-Accuracies.png', dpi=fig.dpi)
+    plt.legend(['Validation acc', 'Test acc'], loc='best')
+    plt.savefig(folder+'-Accuracies.png')
+    plt.close()

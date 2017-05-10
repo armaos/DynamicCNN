@@ -30,7 +30,7 @@ parser = argparse.ArgumentParser(description='Train a DCNN on the binary Stanfor
 parser.add_argument("--learning_rate",type=float, default=0.1, help='Learning rate')
 parser.add_argument("--n_epochs",type=int,default=10,help="Number of epochs")
 parser.add_argument("--valid_freq",type=int,default=10,help="Number of batches processed until we validate.")
-parser.add_argument("--adagrad_reset",type=int,default=5,help="Resets the adagrad cumulative gradient after x epochs. If the value is 0, no reset will be executed.")
+parser.add_argument("--adagrad_reset",type=int,default=0,help="Resets the adagrad cumulative gradient after x epochs. If the value is 0, no reset will be executed.")
 parser.add_argument("--nlayers",type=int,default=2,help="Number of convolution layers")
 # input output
 parser.add_argument("--vocab_size",type=int, default=100, help='Vocabulary size')
@@ -46,6 +46,7 @@ parser.add_argument("--dropout_value", type=float,default=0.5,help="Dropout valu
 parser.add_argument("--channels_size", type=int,default=20,help="Number of input channels")
 # cost functions
 parser.add_argument("--objective", type=str,default='categorical',help="Objective binary/categorical crossentropy")
+parser.add_argument("--updates", type=str,default='adadelta',help="Update algorithm")
 
 
 args = parser.parse_args()
@@ -55,7 +56,9 @@ if len(hyperparas['filter_size_conv_layers'])!= hyperparas['nlayers'] or len(hyp
     raise Exception('Check if the input --filter_size_conv_layers, --nr_of_filters_conv_layers and --activations are lists of size 2, and the --L2 field needs a value list of 4 values.')
 if hyperparas['nlayers']<=0:
     raise Exception('Check number of convolution layers!')
-title="LR"+str(hyperparas["learning_rate"])+"_NL"+str(hyperparas["nlayers"])+"_L2"+str(hyperparas["L2"])+"_k_"+str(hyperparas["ktop"])+str(hyperparas["objective"])
+if hyperparas['updates'] not in ['adadelta' , 'adagrad']:
+    raise Exception('Check the update algorithm')
+title="LR"+str(hyperparas["learning_rate"])+"_NL"+str(hyperparas["nlayers"])+"_k_"+str(hyperparas["ktop"])+str(hyperparas["objective"])+'_'+str(hyperparas["updates"])
 
 
 #######################
@@ -128,8 +131,12 @@ correct_predictions = T.eq(pred, y_batch)
 
 # In the matlab code, Kalchbrenner works with a adagrad reset mechanism, if the para --adagrad_reset has value 0, no reset will be applied
 all_params = lasagne.layers.get_all_params(output_layer)
-updates, accumulated_grads = utils.adagrad(loss_train, all_params, hyperparas['learning_rate'])
-#updates = lasagne.updates.adagrad(loss_train, all_params, hyperparas['learning_rate'])
+
+if hyperparas['updates']=="adagrad":
+    updates, accumulated_grads = utils.adagrad(loss_train, all_params, hyperparas['learning_rate'])
+    #updates = lasagne.updates.adagrad(loss_train, all_params, hyperparas['learning_rate'])
+if hyperparas['updates']=="adadelta":
+    updates = lasagne.updates.adadelta(loss_train, all_params,  hyperparas['learning_rate'], rho=0.95)
 
 
 train_model = theano.function(inputs=[X_batch,y_batch], outputs=loss_train,updates=updates)
@@ -144,7 +151,6 @@ test_model = theano.function(inputs=[X_batch,y_batch], outputs=correct_predictio
 # TRAIN MODEL #
 ###############
 print('Started training')
-print('Because of the default high validation frequency, only improvements are printed.')
 
 best_validation_accuracy = 0
 epoch = 0
@@ -152,6 +158,7 @@ batch_size = hyperparas["batch_size"]
 train_costs=[]
 validation_accuracies=[]
 testing_accuracies=[]
+
 while (epoch < hyperparas['n_epochs']):
     epoch = epoch + 1
     permutation = numpy.random.permutation(n_train_batches)
@@ -163,7 +170,7 @@ while (epoch < hyperparas['n_epochs']):
         #print "train", x_input.shape , y_input.shape
 
         train_loss+=train_model(x_input,y_input)
-        train_costs.append(train_loss)
+
 
         if batch_counter>0 and batch_counter % hyperparas["valid_freq"] == 0:
             accuracy_valid=[]
@@ -176,27 +183,24 @@ while (epoch < hyperparas['n_epochs']):
             #dirty code to correctly asses validation accuracy, last results in the array are predictions for the padding rows and can be dumped afterwards
             this_validation_accuracy = numpy.concatenate(accuracy_valid)[0:n_dev_samples].sum()/float(n_dev_samples)
             validation_accuracies.append(this_validation_accuracy)
-            if this_validation_accuracy > best_validation_accuracy:
-                print("Train loss, "+str( (train_loss/hyperparas["valid_freq"]))+", validation accuracy: "+str(this_validation_accuracy*100)+"%")
-                best_validation_accuracy = this_validation_accuracy
 
-                # test it
-                accuracy_test= []
-                for minibatch_test_index in range(n_test_batches):
-                    x_input = test_x_indexes_extended[minibatch_test_index*batch_size:(minibatch_test_index+1)*batch_size,:,:,0:test_lengths[(minibatch_test_index+1)*batch_size-1]]
-                    y_input = test_y_extended[minibatch_test_index*batch_size:(minibatch_test_index+1)*batch_size]
-                    #print "test", x_input.shape , y_input.shape
-                    accuracy_test.append(test_model(x_input,y_input))
-                this_test_accuracy = numpy.concatenate(accuracy_test)[0:n_test_samples].sum()/float(n_test_samples)
-                testing_accuracies.append(this_test_accuracy)
+            accuracy_test=[]
+            for minibatch_test_index in range(n_test_batches):
+                x_input = test_x_indexes_extended[minibatch_test_index*batch_size:(minibatch_test_index+1)*batch_size,:,:,0:test_lengths[(minibatch_test_index+1)*batch_size-1]]
+                y_input = test_y_extended[minibatch_test_index*batch_size:(minibatch_test_index+1)*batch_size]
+                #print "test", x_input.shape , y_input.shape
+                accuracy_test.append(test_model(x_input,y_input))
+            this_test_accuracy = numpy.concatenate(accuracy_test)[0:n_test_samples].sum()/float(n_test_samples)
+            testing_accuracies.append(this_test_accuracy)
 
-                print("Test accuracy: "+str(this_test_accuracy*100)+"%")
+            print("Train loss, "+str((train_loss/hyperparas["valid_freq"]))+", validation accuracy: "+str(this_validation_accuracy*100)+"%, Test accuracy: "+str(this_test_accuracy*100)+"%")
+            train_costs.append((train_loss/hyperparas["valid_freq"]))
 
             train_loss=0
         batch_counter+=1
 
         dataUtils.check_plots(title,train_costs,validation_accuracies, testing_accuracies)
-    if hyperparas["adagrad_reset"] > 0:
+    if hyperparas["adagrad_reset"] > 0 and hyperparas['updates']=="adagrad":
         if epoch % hyperparas["adagrad_reset"] == 0:
             utils.reset_grads(accumulated_grads)
 
