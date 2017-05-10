@@ -71,7 +71,7 @@ def buildDCNNPaper(batch_size,vocab_size,embeddings_size=48,filter_sizes=[10,7],
     return l_out
 
 def build1DDCNN(batch_size,channels_size,vocab_size,filter_sizes=[20,7],nr_of_filters=[6,12],activations=["tanh","tanh"],ktop=5,dropout=0.5,output_classes=2,padding='last'):
-
+# 2 conv layers , explicity! after there is the dynamic version of the same where you create as much conv layers as you want
     l_in = lasagne.layers.InputLayer(
         shape=(batch_size, channels_size, 1, None),
     )
@@ -113,7 +113,7 @@ def build1DDCNN(batch_size,channels_size,vocab_size,filter_sizes=[20,7],nr_of_fi
     return l_out
 
 def build1DDCNN_dynamic(nlayers,batch_size,channels_size,vocab_size,filter_sizes=[20,7],nr_of_filters=[6,12],activations=["tanh","tanh"],ktop=5,dropout=0.5,output_classes=2,padding='last'):
-
+# 1dddcnn where even the number of layers is dynamic here
     layers=[]
 
     l_in = lasagne.layers.InputLayer(
@@ -131,6 +131,49 @@ def build1DDCNN_dynamic(nlayers,batch_size,channels_size,vocab_size,filter_sizes
             border_mode="full"
         )
         layers.append(l_conv)
+
+        if l<nlayers-1:
+            l_pool = DCNN.pooling.DynamicKMaxPoolLayer(layers[-1],ktop,nroflayers=nlayers,layernr=l+1)
+        if l==nlayers-1:
+            l_pool = DCNN.pooling.KMaxPoolLayer(layers[-1],ktop)
+        layers.append(l_pool)
+
+        l_nonlinear = lasagne.layers.NonlinearityLayer(layers[-1],nonlinearity=parseActivation(activations[l]))
+
+
+
+    l_dropout=lasagne.layers.DropoutLayer(layers[-1],p=dropout)
+
+    l_out = lasagne.layers.DenseLayer(
+        l_dropout,
+        num_units=output_classes,
+        nonlinearity=lasagne.nonlinearities.softmax
+        )
+
+    return l_out
+
+def build1DCNN_dynamic(nlayers,batch_size,filter_sizes=[20,7],nr_of_filters=[6,12],activations=["tanh","tanh"],dropout=0.5,output_classes=2,padding='last'):
+# even the number of layers is dynamic here
+    layers=[]
+
+    l_in = lasagne.layers.InputLayer(
+        shape=(batch_size, channels_size, 1, None),
+    )
+
+    layers.append(l_in)
+
+    for l in range(0, nlayers):
+        l_conv = DCNN.convolutions.Conv1DLayerSplittedSameFilter(
+            layers[-1],
+            nr_of_filters[l],
+            filter_sizes[l],
+            nonlinearity=lasagne.nonlinearities.linear,
+            border_mode="full"
+        )
+        layers.append(l_conv)
+
+        l_fold = DCNN.folding.FoldingLayer(layers[-1])
+        layers.append(l_fold)
 
         if l<nlayers-1:
             l_pool = DCNN.pooling.DynamicKMaxPoolLayer(layers[-1],ktop,nroflayers=nlayers,layernr=l+1)

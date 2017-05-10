@@ -1,0 +1,2 @@
+1DCNN = 1 Dimention CNN. Actually is multi channel 2d matrices but the convolution is happeng in 1d, per row!
+1DDCNN = 1 Dimention Dynamic CNN. 1D convolution in multichannel 1d matrices.
