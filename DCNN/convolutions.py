@@ -6,7 +6,8 @@ import lasagne.utils
 import theano.tensor as T
 import numpy as np
 from theano.tensor.nnet import conv2d
-
+import IPython
+import theano
 
 # Adapted from Lasagne
 class Conv1DLayer(Layer):
@@ -177,11 +178,11 @@ class Conv2DLayer(Layer):
         return self.nonlinearity(activation)
 
 class Conv1DLayerSplittedSameFilter(Layer):
-"""
-    for this case we do convolution in all rows of the input using the same filter.
-    I will use that in the case of sequence embeding that produces 3 rows of embeding accordint to the 3-gram (3mer of AAs)
-    and the convolution will run on the 3 rows with applying the same filter.
-"""
+    """
+        for this case we do convolution in all rows of the input using the same filter.
+        I will use that in the case of sequence embeding that produces 3 rows of embeding accordint to the 3-gram (3mer of AAs)
+        and the convolution will run on the 3 rows with applying the same filter.
+    """
     def __init__(self, incoming, num_filters, filter_size,
                  border_mode="valid",
                  W=lasagne.init.GlorotNormal(), b=lasagne.init.Constant(0.),
@@ -199,9 +200,13 @@ class Conv1DLayerSplittedSameFilter(Layer):
         self.border_mode = border_mode
 
         print self.input_shape
+        if len(self.input_shape)==3:
+            self.num_input_channels = 1
+            self.num_of_rows = self.input_shape[1]
+        elif len(self.input_shape)==4:
+            self.num_input_channels = self.input_shape[1]
+            self.num_of_rows = self.input_shape[2]
 
-        self.num_input_channels = self.input_shape[1]
-        self.num_of_rows = self.input_shape[2]
 
         self.W = self.add_param(W, self.get_W_shape(), name="W")
         if b is None:
@@ -213,11 +218,15 @@ class Conv1DLayerSplittedSameFilter(Layer):
 
     def get_W_shape(self):
         # get_W_shape to be with 1 row . this one row will apply to all rows of input
-        return (self.num_filters,self.num_input_channels, 1, self.filter_size)
+        return (self.num_filters,self.num_input_channels, self.num_of_rows, self.filter_size)
 
     def get_output_shape_for(self, input_shape):
 
         output_length = lasagne.layers.conv.conv_output_length(input_shape[-1],
+                                           self.filter_size,
+                                           self.stride[0],
+                                           self.border_mode)
+        output_height = lasagne.layers.conv.conv_output_length(input_shape[-2],
                                            self.filter_size,
                                            self.stride[0],
                                            self.border_mode)
@@ -237,16 +246,28 @@ class Conv1DLayerSplittedSameFilter(Layer):
         # However, we do need to convolve over multiple channels=output filters previous layer
 
         if self.border_mode in ['valid', 'full']:
-            input_shape_row= (self.input_shape[0], self.input_shape[1], 1,  self.input_shape[3])
-            new_input = input
+            if len(self.input_shape)==3:
+                input_shape_row= (self.input_shape[0], 1, 1, self.input_shape[2])
+                new_input = input.dimshuffle(0,'x', 1, 2)
+            elif len(self.input_shape)==4:
+                input_shape_row= (self.input_shape[0], self.input_shape[1], 1,  self.input_shape[3])
+                new_input = input
 
+            #
             filter_shape_row =(filter_shape[0],filter_shape[1],1,filter_shape[3])
             conveds = []
 
             #Note that this for loop is only to construct the Theano graph and will never be part of the computation
+            print '\n'
+            print input_shape, input_shape_row
+            print filter_shape, filter_shape_row
+
+
             for i in range(self.num_of_rows):
+
+
                 conveds.append(T.nnet.conv.conv2d(new_input[:,:,i,:].dimshuffle(0,1,'x',2),
-                               self.W.dimshuffle(0,1,'x',2),
+                               self.W[:,:,i,:].dimshuffle(0,1,'x',2),
                                image_shape=input_shape_row,
                                filter_shape=filter_shape_row,
                                border_mode=self.border_mode,
@@ -255,18 +276,24 @@ class Conv1DLayerSplittedSameFilter(Layer):
             conved = T.concatenate(conveds,axis=2)
 
 
+            '''conved = T.nnet.conv.conv2d(
+                           input=input,
+                           filters=self.W,
+                           image_shape=input_shape,
+                           filter_shape=filter_shape,
+                           border_mode=self.border_mode,
+                           )'''
 
         elif self.border_mode == 'same':
             raise NotImplementedError("Not implemented yet ")
         else:
             raise RuntimeError("Invalid border mode: '%s'" % self.border_mode)
 
-
+        #IPython.embed()
         if self.b is None:
             activation = conved
         else:
             activation = conved + self.b.dimshuffle('x',0,1,'x')
-
 
         return self.nonlinearity(activation)
 
@@ -325,10 +352,8 @@ class Conv1DLayerSplitted(Layer):
             input_shape = self.input_shape
 
         filter_shape = self.get_W_shape()
-        '''print input_shape
-        print filter_shape
-        print input.dtype
-        print "\n"'''
+
+
 
         # We split the input shape and the filters into seperate rows to be able to execute a row wise 1D convolutions
         # We cannot convolve over the columns

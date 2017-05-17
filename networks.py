@@ -1,5 +1,7 @@
 __author__ = 'Alexandros Armaos  (alexandros@tartaglialab.com )'
 import lasagne
+from lasagne import *
+from lasagne.layers import Layer
 import DCNN
 import theano.tensor as T
 
@@ -157,7 +159,7 @@ def build1DCNN_dynamic(nlayers,batch_size,filter_sizes=[20,7],nr_of_filters=[6,1
     layers=[]
 
     l_in = lasagne.layers.InputLayer(
-        shape=(batch_size, channels_size, 1, None),
+        shape=(batch_size, 1, 3, 100),
     )
 
     layers.append(l_in)
@@ -172,20 +174,21 @@ def build1DCNN_dynamic(nlayers,batch_size,filter_sizes=[20,7],nr_of_filters=[6,1
         )
         layers.append(l_conv)
 
-        l_fold = DCNN.folding.FoldingLayer(layers[-1])
-        layers.append(l_fold)
+        '''l_fold = DCNN.folding.FoldingLayer(layers[-1])
+        layers.append(l_fold)'''
 
-        if l<nlayers-1:
-            l_pool = DCNN.pooling.DynamicKMaxPoolLayer(layers[-1],ktop,nroflayers=nlayers,layernr=l+1)
-        if l==nlayers-1:
-            l_pool = DCNN.pooling.KMaxPoolLayer(layers[-1],ktop)
+        #l_pool = lasagne.layers.pool.MaxPool1DLayer(layers[-1],pool_size=3)
+
+        l_pool = DCNN.pooling.PoolPerLine(layers[-1],pool_size=2)
         layers.append(l_pool)
+
 
         l_nonlinear = lasagne.layers.NonlinearityLayer(layers[-1],nonlinearity=parseActivation(activations[l]))
 
 
 
     l_dropout=lasagne.layers.DropoutLayer(layers[-1],p=dropout)
+
 
     l_out = lasagne.layers.DenseLayer(
         l_dropout,

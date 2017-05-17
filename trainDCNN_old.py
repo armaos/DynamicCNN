@@ -127,6 +127,7 @@ while (epoch < hyperparas['n_epochs']):
         #take a batch with length of each record the length of teh longest sequence of the batch
         x_input = train_x_indexes[minibatch_index*batch_size:(minibatch_index+1)*batch_size,0:train_lengths[(minibatch_index+1)*batch_size-1]]
         y_input = train_y[minibatch_index*batch_size:(minibatch_index+1)*batch_size]
+    
         train_loss+=train_model(x_input,y_input)
 
         if batch_counter>0 and batch_counter % hyperparas["valid_freq"] == 0:

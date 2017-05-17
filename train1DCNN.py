@@ -1,6 +1,7 @@
 __author__ = 'Alexandros Armaos  (alexandros@tartaglialab.com )'
 
 import theano
+theano.config.optimizer='fast_compile'
 import theano.tensor as T
 import numpy
 import lasagne
@@ -80,11 +81,11 @@ shape_=dev_x_indexes.shape
 dev_x_indexes=dev_x_indexes.reshape(shape_[0],1,shape_[1],shape_[2])
 n_train_batches = len(train_x_indexes) / hyperparas['batch_size']
 
-IPython.embed()
 #dev data
 # to be able to do a correct evaluation, we pad a number of rows to get a multiple of the batch size
 dev_x_indexes_extended = dataUtils.pad_to_batch_size(dev_x_indexes,hyperparas['batch_size'])
 dev_y_extended = dataUtils.pad_to_batch_size(dev_y,hyperparas['batch_size'])
+
 n_dev_batches = dev_x_indexes_extended.shape[0] / hyperparas['batch_size']
 n_dev_samples = len(dev_y)
 
@@ -94,7 +95,7 @@ test_y_extended = dataUtils.pad_to_batch_size(test_y,hyperparas['batch_size'])
 n_test_batches = test_x_indexes_extended.shape[0] / hyperparas['batch_size']
 n_test_samples = len(test_y)
 
-IPython.embed()
+#IPython.embed()
 
 ######################
 # BUILD ACTUAL MODEL #
@@ -112,7 +113,7 @@ output_layer = networks.build1DCNN_dynamic(nlayers=hyperparas['nlayers'],batch_s
 
 l2_layers = []
 for layer in lasagne.layers.get_all_layers(output_layer):
-    if isinstance(layer,(DCNN.convolutions.Conv1DLayer,lasagne.layers.DenseLayer)):
+    if isinstance(layer,(DCNN.convolutions.Conv1DLayerSplittedSameFilter,lasagne.layers.DenseLayer)):
         l2_layers.append(layer)
 
 if hyperparas['objective']=="categorical":
@@ -164,9 +165,8 @@ while (epoch < hyperparas['n_epochs']):
     batch_counter = 0
     train_loss=0
     for minibatch_index in permutation:
-        x_input = train_x_indexes[minibatch_index*batch_size:(minibatch_index+1)*batch_size,:,:,0:train_lengths[(minibatch_index+1)*batch_size-1]]
+        x_input = train_x_indexes[minibatch_index*batch_size:(minibatch_index+1)*batch_size,:,:,:]
         y_input = train_y[minibatch_index*batch_size:(minibatch_index+1)*batch_size]
-        #print "train", x_input.shape , y_input.shape
 
         train_loss+=train_model(x_input,y_input)
 
@@ -174,7 +174,7 @@ while (epoch < hyperparas['n_epochs']):
         if batch_counter>0 and batch_counter % hyperparas["valid_freq"] == 0:
             accuracy_valid=[]
             for minibatch_dev_index in range(n_dev_batches):
-                x_input = dev_x_indexes_extended[minibatch_dev_index*batch_size:(minibatch_dev_index+1)*batch_size,:,:,0:dev_lengths[(minibatch_dev_index+1)*batch_size-1]]
+                x_input = dev_x_indexes_extended[minibatch_dev_index*batch_size:(minibatch_dev_index+1)*batch_size,:,:,:]
                 y_input = dev_y_extended[minibatch_dev_index*batch_size:(minibatch_dev_index+1)*batch_size]
                 #print "dev", x_input.shape , y_input.shape
                 accuracy_valid.append(valid_model(x_input,y_input))
@@ -185,7 +185,7 @@ while (epoch < hyperparas['n_epochs']):
 
             accuracy_test=[]
             for minibatch_test_index in range(n_test_batches):
-                x_input = test_x_indexes_extended[minibatch_test_index*batch_size:(minibatch_test_index+1)*batch_size,:,:,0:test_lengths[(minibatch_test_index+1)*batch_size-1]]
+                x_input = test_x_indexes_extended[minibatch_test_index*batch_size:(minibatch_test_index+1)*batch_size,:,:,:]
                 y_input = test_y_extended[minibatch_test_index*batch_size:(minibatch_test_index+1)*batch_size]
                 #print "test", x_input.shape , y_input.shape
                 accuracy_test.append(test_model(x_input,y_input))

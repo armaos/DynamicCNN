@@ -56,7 +56,7 @@ def read_data_1d(x_file,y_file,padding_value=100):
     i=0
     file=open(x_file,"r")
 
-    N=50000
+    N=100000
     #for line in file:
 
     for k in range(N):
@@ -111,7 +111,7 @@ def read_biovec_data(x_file,y_file):
     x_data = []
     file=open(x_file,"r")
 
-    N=5
+    N=10000
     #for line in file:
 
     for k in range(N):
@@ -131,7 +131,8 @@ def read_biovec_data(x_file,y_file):
         y_data.append(int(line.strip()))
 
     file.close()
-    return np.asarray(x_data,dtype=np.float64),np.asarray(y_data,dtype=np.float64)
+
+    return np.asarray(x_data,dtype=np.float32),np.asarray(y_data,dtype=np.int32)
 
 def pad_to_batch_size(array,batch_size):
 
@@ -150,7 +151,68 @@ def pad_to_batch_size(array,batch_size):
     elif len(array.shape)==4:
         padding = np.zeros((rows_extra,array.shape[1],array.shape[2],array.shape[3]),dtype=np.int32)
 
-        return np.vstack((array,padding))
+    return np.vstack((array,padding))
+
+def read_and_sort_matlab_data(x_file,y_file,padding_value=15448):
+
+
+    sorted_dict = {}
+    x_data = []
+    i=0
+
+    file = open(x_file,"r")
+
+    N=100
+    #for line in file:
+
+    for k in range(N):
+        line=file.next().strip()
+
+        words = line.split(",")
+        result = []
+        length=None
+        for word in words:
+            word_i = int(word)
+            if word_i == padding_value and length==None:
+                length = len(result)
+            result.append(word_i)
+        x_data.append(result)
+
+        if length==None:
+            length=len(result)
+
+        if length in sorted_dict:
+            sorted_dict[length].append(i)
+        else:
+            sorted_dict[length]=[i]
+        i+=1
+
+    file.close()
+
+    file = open(y_file,"r")
+    y_data = []
+    N=100
+    #for line in file:
+
+    for k in range(N):
+        line=file.next().strip()
+
+        words = line.split(",")
+        y_data.append(int(words[0])-1)
+    file.close()
+
+    new_train_list = []
+    new_label_list = []
+    lengths = []
+    for length, indexes in sorted_dict.items():
+        for index in indexes:
+            new_train_list.append(x_data[index])
+            new_label_list.append(y_data[index])
+            lengths.append(length)
+
+    return np.asarray(new_train_list,dtype=np.int32),np.asarray(new_label_list,dtype=np.int32),lengths
+
+
 
 def extend_lenghts(length_list,batch_size):
     elements_extra = batch_size - (len(length_list) % batch_size)

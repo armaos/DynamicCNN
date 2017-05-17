@@ -2,6 +2,49 @@ __author__ = 'Frederic Godin  (frederic.godin@ugent.be / www.fredericgodin.com)'
 
 import theano.tensor as T
 from lasagne.layers.base import Layer
+from utils import as_tuple
+from lasagne.layers.pool import pool_output_length
+from lasagne.layers.pool import pool_2d
+class PoolPerLine(Layer):
+
+    def __init__(self, incoming, pool_size, stride=None, pad=0,
+                     ignore_border=True, mode='max', **kwargs):
+            super(PoolPerLine, self).__init__(incoming, **kwargs)
+
+            self.pool_size = as_tuple(pool_size, 1)
+            self.stride = self.pool_size if stride is None else as_tuple(stride, 1)
+            self.pad = as_tuple(pad, 1)
+            self.ignore_border = ignore_border
+            self.mode = mode
+            
+
+    def get_output_shape_for(self, input_shape):
+
+        output_shape = list(input_shape)  # copy / convert to mutable list
+
+        output_shape[-1] = pool_output_length(input_shape[-1],
+                                              pool_size=self.pool_size[0],
+                                              stride=self.stride[0],
+                                              pad=self.pad[0],
+                                              ignore_border=self.ignore_border,
+                                              )
+
+        return tuple(output_shape)
+
+    def get_output_for(self, input, **kwargs):
+        #Add one additional dimension in the rigth and give the 5d tensor for the
+        #pooling. the 2d pooling will do the polling in the last 2 dimensiotns
+        #the rows and the new additional one. then we kick it out in the return [:,:,:,:,0]
+        input_5d = T.shape_padright(input, 1)
+        pool=pool_2d(input_5d,
+                         ws=(self.pool_size[0], 1),
+                         stride=(self.stride[0], 1),
+                         ignore_border=self.ignore_border,
+                         pad=(self.pad[0], 0),
+                         mode=self.mode,
+                         )
+
+        return pool[:,:, :, :, 0]
 
 
 class KMaxPoolLayer(Layer):

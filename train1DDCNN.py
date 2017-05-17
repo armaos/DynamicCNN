@@ -167,7 +167,7 @@ while (epoch < hyperparas['n_epochs']):
     for minibatch_index in permutation:
         x_input = train_x_indexes[minibatch_index*batch_size:(minibatch_index+1)*batch_size,:,:,0:train_lengths[(minibatch_index+1)*batch_size-1]]
         y_input = train_y[minibatch_index*batch_size:(minibatch_index+1)*batch_size]
-        #print "train", x_input.shape , y_input.shape
+        print "train", x_input.shape , y_input.shape
 
         train_loss+=train_model(x_input,y_input)
 

@@ -1,0 +1,17 @@
+--learning_rate 1
+--n_epochs 20
+--valid_freq 10
+--adagrad_reset 1
+--nlayers 1
+--vocab_size 100
+--output_classes 2
+--batch_size 4
+--filter_size_conv_layers 5
+--nr_of_filters_conv_layers 5
+--activations 'tanh'
+--L2 1.5e-05  5e-05
+--ktop 4
+--dropout_value 0.5
+--channels_size 20
+--objective 'categorical'
+--updates 'adadelta'
