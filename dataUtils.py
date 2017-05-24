@@ -25,6 +25,7 @@ one_hot_aa['X']=np.zeros((1)).repeat(20)
 
 pv = biovec.models.load_protvec('trained_models/swissprot_reviewed_protvec')
 
+
 def one_hot(protseq):
 
 
@@ -111,7 +112,7 @@ def read_biovec_data(x_file,y_file):
     x_data = []
     file=open(x_file,"r")
 
-    N=10000
+    N=100000
     #for line in file:
 
     for k in range(N):
@@ -135,22 +136,21 @@ def read_biovec_data(x_file,y_file):
     return np.asarray(x_data,dtype=np.float32),np.asarray(y_data,dtype=np.int32)
 
 def pad_to_batch_size(array,batch_size):
-
+    ttype=array.dtype
     rows_extra = batch_size - (array.shape[0] % batch_size)
     if len(array.shape)==1:
-        padding = np.zeros((rows_extra,),dtype=np.int32)
+        padding = np.zeros((rows_extra,),dtype=array.dtype)
         return np.concatenate((array,padding))
 
     elif len(array.shape)==2:
-        padding = np.zeros((rows_extra,array.shape[1]),dtype=np.int32)
+        padding = np.zeros((rows_extra,array.shape[1]),dtype=array.dtype)
         return np.vstack((array,padding))
 
     elif len(array.shape)==3:
-        padding = np.zeros((rows_extra,array.shape[1],array.shape[2]),dtype=np.int32)
+        padding = np.zeros((rows_extra,array.shape[1],array.shape[2]),dtype=array.dtype)
 
     elif len(array.shape)==4:
-        padding = np.zeros((rows_extra,array.shape[1],array.shape[2],array.shape[3]),dtype=np.int32)
-
+        padding = np.zeros((rows_extra,array.shape[1],array.shape[2],array.shape[3]),dtype=array.dtype)
     return np.vstack((array,padding))
 
 def read_and_sort_matlab_data(x_file,y_file,padding_value=15448):

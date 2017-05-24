@@ -111,10 +111,17 @@ rng = numpy.random.RandomState(23455)
 # define/load the network
 output_layer = networks.build1DDCNN_dynamic(nlayers=hyperparas['nlayers'],batch_size=hyperparas['batch_size'],channels_size=hyperparas['channels_size'],vocab_size=hyperparas['vocab_size'],filter_sizes=hyperparas['filter_size_conv_layers'],nr_of_filters=hyperparas['nr_of_filters_conv_layers'],activations=hyperparas['activations'],ktop=hyperparas['ktop'],dropout=hyperparas["dropout_value"],output_classes=hyperparas['output_classes'],padding='last')
 
+internal_parameters=0
+
+print('Started training')
 l2_layers = []
 for layer in lasagne.layers.get_all_layers(output_layer):
+    internal_parameters+=lasagne.layers.count_params(layer)
     if isinstance(layer,(DCNN.convolutions.Conv1DLayer,lasagne.layers.DenseLayer)):
         l2_layers.append(layer)
+
+print "Internal parameters: " ,internal_parameters
+print "Training set size: ", len(train_x_indexes)
 
 if hyperparas['objective']=="categorical":
     s1=lasagne.objectives.aggregate(lasagne.objectives.categorical_crossentropy(lasagne.layers.get_output(output_layer,X_batch),y_batch),mode='mean')
@@ -167,7 +174,6 @@ while (epoch < hyperparas['n_epochs']):
     for minibatch_index in permutation:
         x_input = train_x_indexes[minibatch_index*batch_size:(minibatch_index+1)*batch_size,:,:,0:train_lengths[(minibatch_index+1)*batch_size-1]]
         y_input = train_y[minibatch_index*batch_size:(minibatch_index+1)*batch_size]
-        print "train", x_input.shape , y_input.shape
 
         train_loss+=train_model(x_input,y_input)
 

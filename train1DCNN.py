@@ -13,6 +13,9 @@ import networks
 import utils
 import IPython
 
+def inspect_inputs(i, node, fn):
+    print i, node, "input(s) shape(s):", [input[0].shape for input in
+fn.inputs]
 
 def iterate_minibatches(inputs, targets, batchsize, shuffle=True):
     assert len(inputs) == len(targets)
@@ -48,7 +51,7 @@ parser.add_argument("--channels_size", type=int,default=20,help="Number of input
 # cost functions
 parser.add_argument("--objective", type=str,default='categorical',help="Objective binary/categorical crossentropy")
 parser.add_argument("--updates", type=str,default='adadelta',help="Update algorithm")
-
+parser.add_argument("--border_mode", type=str,default='full',help="Border mode in Convolution")
 
 args = parser.parse_args()
 hyperparas = vars(args)
@@ -111,10 +114,14 @@ rng = numpy.random.RandomState(23455)
 # define/load the network
 output_layer = networks.build1DCNN_dynamic(nlayers=hyperparas['nlayers'],batch_size=hyperparas['batch_size'],filter_sizes=hyperparas['filter_size_conv_layers'],nr_of_filters=hyperparas['nr_of_filters_conv_layers'],activations=hyperparas['activations'],dropout=hyperparas["dropout_value"],output_classes=hyperparas['output_classes'],padding='last')
 
+internal_parameters=0
 l2_layers = []
 for layer in lasagne.layers.get_all_layers(output_layer):
+    internal_parameters+=lasagne.layers.count_params(layer)
     if isinstance(layer,(DCNN.convolutions.Conv1DLayerSplittedSameFilter,lasagne.layers.DenseLayer)):
         l2_layers.append(layer)
+print "Internal parameters: " ,internal_parameters
+print "Training set size: ", len(train_x_indexes)
 
 if hyperparas['objective']=="categorical":
     s1=lasagne.objectives.aggregate(lasagne.objectives.categorical_crossentropy(lasagne.layers.get_output(output_layer,X_batch),y_batch),mode='mean')
@@ -139,8 +146,9 @@ if hyperparas['updates']=="adadelta":
     updates = lasagne.updates.adadelta(loss_train, all_params,  hyperparas['learning_rate'], rho=0.95)
 
 
-train_model = theano.function(inputs=[X_batch,y_batch], outputs=loss_train,updates=updates)
 
+#train_model = theano.function(inputs=[X_batch,y_batch], outputs=loss_train,updates=updates,mode=theano.compile.MonitorMode(pre_func=inspect_inputs))
+train_model = theano.function(inputs=[X_batch,y_batch], outputs=loss_train,updates=updates)
 valid_model = theano.function(inputs=[X_batch,y_batch], outputs=correct_predictions)
 
 test_model = theano.function(inputs=[X_batch,y_batch], outputs=correct_predictions)
