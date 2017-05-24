@@ -47,6 +47,7 @@ parser.add_argument("--channels_size", type=int,default=20,help="Number of input
 # cost functions
 parser.add_argument("--objective", type=str,default='categorical',help="Objective binary/categorical crossentropy")
 parser.add_argument("--updates", type=str,default='adadelta',help="Update algorithm")
+parser.add_argument("--border_mode", type=str,default='full',help="Border mode in Convolution")
 
 
 args = parser.parse_args()
@@ -109,7 +110,7 @@ y_batch = T.lvector('y')
 
 rng = numpy.random.RandomState(23455)
 # define/load the network
-output_layer = networks.build1DDCNN_dynamic(nlayers=hyperparas['nlayers'],batch_size=hyperparas['batch_size'],channels_size=hyperparas['channels_size'],vocab_size=hyperparas['vocab_size'],filter_sizes=hyperparas['filter_size_conv_layers'],nr_of_filters=hyperparas['nr_of_filters_conv_layers'],activations=hyperparas['activations'],ktop=hyperparas['ktop'],dropout=hyperparas["dropout_value"],output_classes=hyperparas['output_classes'],padding='last')
+output_layer = networks.build1DDCNN_dynamic(nlayers=hyperparas['nlayers'],batch_size=hyperparas['batch_size'],channels_size=hyperparas['channels_size'],vocab_size=hyperparas['vocab_size'],filter_sizes=hyperparas['filter_size_conv_layers'],nr_of_filters=hyperparas['nr_of_filters_conv_layers'],activations=hyperparas['activations'],ktop=hyperparas['ktop'],dropout=hyperparas["dropout_value"],output_classes=hyperparas['output_classes'],padding='last',border_mode=hyperparas['border_mode'])
 
 internal_parameters=0
 

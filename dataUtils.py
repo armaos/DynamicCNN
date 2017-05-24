@@ -57,7 +57,7 @@ def read_data_1d(x_file,y_file,padding_value=100):
     i=0
     file=open(x_file,"r")
 
-    N=100000
+    N=1000
     #for line in file:
 
     for k in range(N):

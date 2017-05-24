@@ -15,4 +15,4 @@
 --channels_size 20
 --objective 'categorical'
 --updates 'adadelta'
---border_mode 'same'
+--border_mode 'full'

@@ -195,10 +195,8 @@ class Conv1DLayerSplittedSameFilter(Layer):
         self.filter_size = filter_size
         self.stride = lasagne.utils.as_tuple(1, 1)
 
-        if border_mode=="same":
-            self.border_mode=self.filter_size-1
-        else:
-            self.border_mode = border_mode
+        self.border_mode = border_mode
+
 
         print "input shape", self.input_shape
         if len(self.input_shape)==3:
@@ -225,11 +223,13 @@ class Conv1DLayerSplittedSameFilter(Layer):
 
     def get_output_shape_for(self, input_shape):
 
+
         output_length = lasagne.layers.conv.conv_output_length(input_shape[-1],
                                            self.filter_size,
                                            self.stride[0],
                                            self.border_mode)
 
+        print "output shape: ",(input_shape[0], self.num_filters, self.num_of_rows, output_length)
         return (input_shape[0], self.num_filters, self.num_of_rows, output_length)
 
     def get_output_for(self, input, input_shape=None, **kwargs):

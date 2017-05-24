@@ -112,7 +112,7 @@ y_batch = T.lvector('y')
 
 rng = numpy.random.RandomState(23455)
 # define/load the network
-output_layer = networks.build1DCNN_dynamic(nlayers=hyperparas['nlayers'],batch_size=hyperparas['batch_size'],filter_sizes=hyperparas['filter_size_conv_layers'],nr_of_filters=hyperparas['nr_of_filters_conv_layers'],activations=hyperparas['activations'],dropout=hyperparas["dropout_value"],output_classes=hyperparas['output_classes'],padding='last')
+output_layer = networks.build1DCNN_dynamic(nlayers=hyperparas['nlayers'],batch_size=hyperparas['batch_size'],filter_sizes=hyperparas['filter_size_conv_layers'],nr_of_filters=hyperparas['nr_of_filters_conv_layers'],activations=hyperparas['activations'],dropout=hyperparas["dropout_value"],output_classes=hyperparas['output_classes'],padding='last', border_mode=hyperparas['border_mode'])
 
 internal_parameters=0
 l2_layers = []
